@@ -52,7 +52,7 @@ the devices sends a Join-Request message to the network, then the network replie
 with a Join-Accept message. AppSKey and NwkSKey are computed in this
 procedure.}
 
-{The two message in the standard are defined as follows:}
+{The two messages in the standard are defined as follows \cite{spec}:}
 
 \begin{figure}[h!]
 {\includegraphics[width=0.8\textwidth]{images/image16.png}}
@@ -61,15 +61,12 @@ procedure.}
 \begin{figure}[h!]
 {\includegraphics[width=0.8\textwidth]{images/image6.png}}
 \end{figure}
-{(source: \cite{spec})}
 
-
-{When using OTAA, the AppSKey and NwkSKey are determined as follows:}
+{When using OTAA, the AppSKey and NwkSKey are determined as follows \cite{spec}:}
 
 \begin{figure}[h!]
 {\includegraphics[width=0.8\textwidth]{images/image4.png}}
 \end{figure}
-{(source: \cite{spec})}
 
 {Note that both the AppSKey and the NwkSKey are derived from the AppKey.
 We will elaborate on this aspect later.}
@@ -449,65 +446,53 @@ Depending on the target difficulty of guessing the real event, the amount of dum
 traffic needs to be varied. However, this approach will consume more energy and thus might
 results in lower lifetime of battery-powered devices, if not compensated for otherwise.
 
+\chapter{Changes in LoRaWAN 1.1}\label{h.6snn4dp8j73u}
 
-\chapter{LoRaWAN Standard and changes in LoRaWAN 1.1}\label{h.6snn4dp8j73u}
+The new LoRaWAN 1.1 standard brings several changes to the table. Perhaps the most significant one is the addition of the
+backend definition. We will present the summary of the changes and their security impact below.
 
-{One of the biggest changes in LoRaWAN 1.1 is the addition of the
-backend definition. We will present the details below.
+Note: As of the time of writing, only a draft version of the standard is available. Nevertheless, we present the changes here, as the functional aspects are more-or-less finished.
 
-\hypertarget{h.jpbc1i7c9eqd}{\subsection{\texorpdfstring{{Frame
+\hypertarget{h.jpbc1i7c9eqd}{\section{\texorpdfstring{{Frame
 counters}}{Frame counters}}\label{h.jpbc1i7c9eqd}}
 
-{The LoRaWAN 1.1 standard defines 3 instead of 2 frame counters. While
+{The LoRaWAN 1.1 standard defines three instead of two frame counters. While
 1.0 defined one frame counter for uplink messages, 1.1 defines one
 counter for messages with fport = 0 and one counter for all other uplink
-counters. All frame counters are now 32 bit values. More importantly
-}{LoRaWAN 1.1 forbids frame counter resets}{. Specifically it says}
+messages. All frame counters are now 32-bit values rather than the original 16-bit. More importantly, LoRaWAN 1.1 forbids frame counter resets. Specifically:
 
-{``ABP devices have their Frame Counters initialized to 0 at
-fabrication. In ABP devices the}
+% Note: NOT putting citations to quotes, because the standard is not available yet
+\begin{displayquote}
+ABP devices have their Frame Counters initialized to 0 at
+fabrication. In ABP devices the frame counters MUST NEVER be reset during the device's life time. If
+the end-device is susceptible of [sic] losing power during its life time (battery replacement
+for example), the frame counters SHALL persist during such event.
+\end{displayquote}
 
-{frame counters MUST NEVER be reset during the device's life time. If
-the end-device is}
+\begin{displayquote}
+The end-device shall not reuse the same FCntUp value, except for
+retransmission, with the same application and network session keys.
+\end{displayquote}
 
-{susceptible of losing power during its life time (battery replacement
-for example), the frame}
+In case of OTAA/Network Join, the counter is called DevNonce and is
+reset on every join:
 
-{counters SHALL persist during such event.''}
+% TODO this figure is apparently the wrong one
+%\begin{figure}[h!]
+%{\includegraphics[width=0.8\textwidth]{images/image14.png}}
+%\end{figure}
 
-{And}
+\begin{displayquote}
+DevNonce is a counter starting at 0 when the device is initially
+powered up and incremented with every Join-request. A DevNonce value SHALL NEVER be reused for a
+given JoinEUI value. If the end-device can be power-cycled then DevNonce SHALL be
+persistent (stored in a [sic] non-volatile memory). Resetting DevNonce without changing JoinEUI
+will cause the Network Server to discard the Join-requests of the device. For each
+end-device, the Network Server keeps track of the last DevNonce value used by the
+end-device, and ignores Join-requests if DevNonce is not incremented.
+\end{displayquote}
 
-{``The end-device shall not reuse the same FCntUp value, except for
-retransmission, with the}
-
-{same application and network session keys.''}
-
-{In case of OTAA/Network join, the counter is called devnonce and is
-resetted on every join:}
-
-\begin{figure}[h!]
-{\includegraphics[width=0.8\textwidth]{images/image14.png}}
-\end{figure}
-
-{``DevNonce is a counter starting at 0 when the device is initially
-powered up and incremented}
-
-{with every Join-request. A DevNonce value SHALL NEVER be reused for a
-given JoinEUI}
-
-{value. If the end-device can be power-cycled then DevNonce SHALL be
-persistent (stored}
-
-{in a non-volatile memory). Resetting DevNonce without changing JoinEUI
-will cause the}
-
-{Network Server to discard the Join-requests of the device. For each
-end-device, the}
-
-{Network Server keeps track of the last DevNonce value used by the
-end-device, and}
-
-{ignores Join-requests if DevNonce is not incremented.``}
+========== TODO \LaTeX{} and proofread from here ==========
 
 {Thus ABP devices need to have a permanent storage for their frame
 counter, while OTAA devices can keep their counter in volatile memory,
@@ -567,7 +552,7 @@ experimental/private networks that}
 
 {``}
 
-\hypertarget{h.6wjpqn9cabfu}{\subsection{\texorpdfstring{{The gap drop
+\hypertarget{h.6wjpqn9cabfu}{\section{\texorpdfstring{{The gap drop
 is removed}}{The gap drop is removed}}\label{h.6wjpqn9cabfu}}
 
 {While the 1.0 standard defined that when a counter with a too big gap
@@ -589,7 +574,7 @@ MAX\_FCNT\_GAP then too}
 
 {many data frames have been lost then subsequent will be discarded.''}
 
-\hypertarget{h.7ctbv6nd7du7}{\subsection{\texorpdfstring{{Channel
+\hypertarget{h.7ctbv6nd7du7}{\section{\texorpdfstring{{Channel
 selection}}{Channel selection}}\label{h.7ctbv6nd7du7}}
 
 {Both standards define that }
@@ -603,14 +588,14 @@ next packet. Thus an attacker can see if she did not receive a packet.
 This might be particular useful for event based devices in which an
 attacker wants to distinguish between regular noise and real events.}
 
-\hypertarget{h.i6r97yb5iafg}{\subsection{\texorpdfstring{{FPort}}{FPort}}\label{h.i6r97yb5iafg}}
+\hypertarget{h.i6r97yb5iafg}{\section{\texorpdfstring{{FPort}}{FPort}}\label{h.i6r97yb5iafg}}
 
 {The FPort is still unencrypted in LoraWAN 1.1. Thus the event
 indications that were observed with the burglar alarm in our experiments
 are still observable. To improve security, the LoRaWAN standard should
 move the FPort part into the encrypted message part.}
 
-\hypertarget{h.mdrkurwqvvj8}{\subsection{\texorpdfstring{{NEW: Lora
+\hypertarget{h.mdrkurwqvvj8}{\section{\texorpdfstring{{NEW: Lora
 alliance DNS server as a single point of
 failure}}{NEW: Lora alliance DNS server as a single point of failure}}\label{h.mdrkurwqvvj8}}
 
@@ -624,7 +609,7 @@ single point of failure }{for backend networks.}
 {Compare with chapter ``19.1}{~DNS configuration'' of the backend
 definition.}
 
-\hypertarget{h.mn1ux3159m0}{\subsection{\texorpdfstring{{Communication
+\hypertarget{h.mn1ux3159m0}{\section{\texorpdfstring{{Communication
 between gateway and the
 network}}{Communication between gateway and the network}}\label{h.mn1ux3159m0}}
 
@@ -633,7 +618,7 @@ standard IP connections, while previously it was undefined. In practise
 packets of LoRaWAN 1.0 gateways were forwarded using plain UDP without
 any encryption or signature.}
 
-\hypertarget{h.jom2i6adwnnm}{\subsection{\texorpdfstring{{NetID
+\hypertarget{h.jom2i6adwnnm}{\section{\texorpdfstring{{NetID
 defined}}{NetID defined}}\label{h.jom2i6adwnnm}}
 
 {Before version 1.1 the handling of the NetID was undefined and could be
@@ -642,7 +627,7 @@ alliance. Even though this will regulate the use more clearly, it also
 adds an additional attack vector: Now an attacker can lookup the netid
 from the DNS database and specifically attack a network}
 
-\hypertarget{h.rext4wcd7qnn}{\subsection{\texorpdfstring{{Communication
+\hypertarget{h.rext4wcd7qnn}{\section{\texorpdfstring{{Communication
 between
 AS/NS/JS}}{Communication between AS/NS/JS}}\label{h.rext4wcd7qnn}}
 
@@ -656,7 +641,7 @@ follows:}
 application server / network server and join server. However public key
 crypto would also be feasible (page 18 of backend document).}
 
-\hypertarget{h.rxbla8bfpdr7}{\subsection{\texorpdfstring{{Unique Key
+\hypertarget{h.rxbla8bfpdr7}{\section{\texorpdfstring{{Unique Key
 usage}}{Unique Key usage}}\label{h.rxbla8bfpdr7}}
 
 {Version 1.1. defines that a key should be unique per device: }
@@ -669,7 +654,7 @@ AppKey/NwkKey from an end-device only compromises this one end-device.''
 {Prior to 1.1 this was undefined and thus shared keys were used in
 different devices, especially for ABP devices.}
 
-\hypertarget{h.ukt1jzew31xa}{\subsection{\texorpdfstring{{Key
+\hypertarget{h.ukt1jzew31xa}{\section{\texorpdfstring{{Key
 Derivation}}{Key Derivation}}\label{h.ukt1jzew31xa}}
 
 {One of the challenging aspects of LoRaWAN is a safe key derivation
@@ -690,7 +675,7 @@ the join server on arrival of encrypted messages with payload inside.
 That means that the join server and the application server would need to
 be operated by the user to be able to hide the payload encryption key.}
 
-\hypertarget{h.q0a2jd9a1je7}{\subsection{\texorpdfstring{{Dangers of
+\hypertarget{h.q0a2jd9a1je7}{\section{\texorpdfstring{{Dangers of
 overdefinition}}{Dangers of overdefinition}}\label{h.q0a2jd9a1je7}}
 
 {While LoRaWAN 1.0 did not define the backend part at all, in LoRaWAN

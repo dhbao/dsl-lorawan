@@ -34,6 +34,13 @@
 \department{Department of Computer Science}
 \date{\today}
 
+
+% EVIL HACK to remove list margin in table
+\makeatletter
+\let\LT@arraybak\LT@array
+\def\LT@array{\setlist[itemize]{leftmargin=*,after=\strut}\LT@arraybak}
+\makeatother
+
 \begin{document}
 
 \frontmatter
@@ -48,6 +55,9 @@
 \end{titlingpage}
 
 \input{abstract}
+\newpage
+\tableofcontents
+
 \mainmatter
 \input{meat}
 \input{references}
