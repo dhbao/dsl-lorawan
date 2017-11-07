@@ -47,8 +47,8 @@ join procedure.}
   {AppKey}
 \end{itemize}
 
-{Devices using OTAA use a join procedure for joining the network: First
-the devices sends a Join-Request message to the network, which replies
+{Devices using OTAA use a join procedure for joining the network: First,
+the devices sends a Join-Request message to the network, then the network replies
 with a Join-Accept message. AppSKey and NwkSKey are computed in this
 procedure.}
 
@@ -61,8 +61,7 @@ procedure.}
 \begin{figure}[h!]
 {\includegraphics[width=0.8\textwidth]{images/image6.png}}
 \end{figure}
-
-{(both images copied from the LoRaWAN standard)}
+{(source: \cite{spec})}
 
 
 {When using OTAA, the AppSKey and NwkSKey are determined as follows:}
@@ -70,8 +69,7 @@ procedure.}
 \begin{figure}[h!]
 {\includegraphics[width=0.8\textwidth]{images/image4.png}}
 \end{figure}
-
-{(also copied from the standard)}
+{(source: \cite{spec})}
 
 {Note that both the AppSKey and the NwkSKey are derived from the AppKey.
 We will elaborate on this aspect later.}
@@ -124,7 +122,7 @@ the last seen value should be discarded. However, in practice it is hard
 to implement a device that behaves accordingly: a LoRa device may lose
 power anytime, and storing the frame counter in non-volatile storage
 after every message is often seen as
-infeasible.\footnote{LoRa devices are usually power-constrained and writing data to non-volatile storage costs extra energy. Perhaps more importantly, it limits the lifetime of the device, because flash storage can only sustain a limited number of overwrites (on the order of thousands for a single cell).} Therefore
+infeasible.\footnote{LoRa devices are usually power-constrained and writing data to non-volatile storage costs extra energy. Perhaps more importantly, it limits the lifetime of the device, because flash storage can only sustain a limited number of overwrites (on the order of thousands per one cell).} Therefore
 all providers in Switzerland give the option to ignore the frame
 counter: in this mode, a packet with a frame counter of 0 is allowed any
 time, with the extra effect of dropping any further packets with high
@@ -164,19 +162,19 @@ application-layer security is introduced.}
 \section{\texorpdfstring{{Static
 keys}}{Static keys}}\label{h.1g22hul9yfrw}
 
-{When using ABP, the session keys are fixed and will never be replaced.
+When using ABP, the session keys are fixed and will never be replaced.
 Thus brute force attacks can use every packet the device sends during
 its whole lifetime, and leaked keys compromise all future packets until
-manual re-configuration.}
+manual re-configuration.  While network providers
+recommend the use of OTAA, in reality many LoRaWAN devices are pre-configured with ABP.
 
-\section{\texorpdfstring{{Preconfigured
-devices}}{Preconfigured devices}}\label{h.7mkfizapvt5a}
+\section{Pre-configured devices}\label{h.7mkfizapvt5a}
 
 {The test devices that were ordered from Ascoel
 (\href{http://www.ascoel.it}{www.ascoel.it})
 contained pre-configured keys. While this might be convenient in some
 places, it also allows the manufacturer to decrypt the data sent by the
-devices. Furthermore the devices came pre-configured in ABP mode and
+devices. Furthermore, the devices came pre-configured in ABP mode and
 thus never change the session keys. For some devices it was impossible
 to change the keys or switch to OTAA mode.}
 
@@ -193,7 +191,7 @@ attacks}}{Replay attacks}}\label{h.eymg8atzq5bp}
 {While in theory they should always be increasing during one session, in
 practice all network providers offer at least to ignore the counter. ABP
 devices always use the same session and thus when the battery is
-replaced, the counter will be reset (as usually this is not stored in
+replaced, the counter will be reset (usually the counter is not stored in
 non-volatile memory). Thus network providers allow frame counter reset.}
 
 {Thus an attacker has the ability to replay packets for ABP devices, if
@@ -210,19 +208,18 @@ devices}}{Security of event-based devices}}\label{h.1a3modh2fhpw}}
 
 \hypertarget{h.kyg6ihxrou88}{\section{\texorpdfstring{{Motivation}}{Motivation}}\label{h.kyg6ihxrou88}}
 
-{While it was show in the previous section that there are various
-obvious security issues within LoRaWAN, the nature of a long range
+While it was show in the previous section that there are various
+obvious security issues within LoRaWAN. Importantly, the nature of a long range
 wireless network allows attacks from a far away adversary that are not
 possible with traditional wireless protocols like 802.11. If a device
-sends a message, it can be detected within the range of a receiver,
-which might be within a couple of kilometers distance.}
+sends a message, it can be detected by a receiver a couple of kilometers away.
 
 \section{Use cases and
-List of devices}\label{h.jsdk7si1wtbx}
+a list of devices}\label{h.jsdk7si1wtbx}
 
-{To illustrate the potential threats, a list of event based devices
+{To illustrate the potential threats, a list of event-based devices
 found on the market has been compiled. The attack vectors assume that
-the devices only send a message if an event has happened.}
+the devices only send a message if an event has happened. In reality a device usually sends keep-alive packets in addition to event-related packets, but they are easily distinguishable, as they are sent at regular intervals.
 
 \begin{longtable}[c]{|l|l|l|}
 \hline
@@ -302,7 +299,7 @@ detected.}
 \strut\end{minipage} &
 \begin{minipage}[t]{0.30\columnwidth}\raggedright\strut
 {Sends an event when pressed. Can be used as emergency notification
-(``HELP'') or in case something is broken (``Repair requests'')}
+(``HELP'') or in case something is broken (``Repair request'')}
 \strut\end{minipage} &
 \begin{minipage}[t]{0.40\columnwidth}\raggedright\strut
 \begin{itemize}
@@ -316,13 +313,13 @@ detected.}
 {Remote controls}
 \strut\end{minipage} &
 \begin{minipage}[t]{0.30\columnwidth}\raggedright\strut
-{Control light, power, TV, windows with a LoRaWAN based remote control}
+{Control light, power, TV, windows with a LoRaWAN-based remote control}
 \strut\end{minipage} &
 \begin{minipage}[t]{0.40\columnwidth}\raggedright\strut
 \begin{itemize}
 \tightlist
 \item
-  {Adversary can learn about the presence of people in the house}
+  {Adversary can learn about the presence (or absence) of people in the house}
 \item
   {Susceptible to replay attacks}
 \end{itemize}
@@ -347,8 +344,7 @@ detected.}
 {Bluetooth sensor}
 \strut\end{minipage} &
 \begin{minipage}[t]{0.30\columnwidth}\raggedright\strut
-{If a paired device (usually a smart phone) is out of range, an alarm is
-being sent.}
+{If a paired device (usually a smart phone) is out of range, an alarm is sent.}
 \strut\end{minipage} &
 \begin{minipage}[t]{0.40\columnwidth}\raggedright\strut
 \begin{itemize}
@@ -392,10 +388,9 @@ support changing the address nor keys. Thus the device was not usable in Switzer
 
 Even if the device were
 usable, any user of this device would share the key with the
-manufacturer and could never change the key herself. No further tests
-have been conducted with this device, as debugging without access to the
-packets (as hardcoded keys were used) and thus the data was not seen
-feasible.
+manufacturer and could never change the key herself.
+Because it was not possible to connect the device to a network provider, no further tests have
+been conducted with this device.
 
 \section{\texorpdfstring{{Example:
 Burglar alarm}}{Example: Burglar alarm}}\label{h.ajy5u48pfd5q}
@@ -403,9 +398,9 @@ Burglar alarm}}{Example: Burglar alarm}}\label{h.ajy5u48pfd5q}
 {The Ascoel IR868LR family\footnote{\url{http://www.ascoel.it/images/pdf_ascoel/IR868LR_eng.pdf}} is
 an infrared passive sensor for indoor applications. It is also shipped
 in ABP mode with pre-configured keys. It can, however, be reconfigured
-to OTAA and the parameters can be changed (DevAddr, NwSKey, AppSKey for
-ABP and AppEUI and AppKey for OTAA). After changing the device to OTAA,
-packets are being sent to the network:}
+to OTAA and the parameters can be changed (DevAddr, NwkSKey, AppSKey for
+ABP; and AppEUI and AppKey for OTAA). After changing the device to OTAA,
+these packets are being sent to the network:}
 \begin{enumerate}
 \tightlist
 \item
@@ -415,45 +410,50 @@ packets are being sent to the network:}
 \item
   {an alarm packet when presence is detected}
 \end{enumerate}
-{While all of these messages can be distinguished when the keys are
+While all of these messages can be distinguished when the keys are
 known, the type of these messages can also be understood by an
-adversary, without the key knowledge, because the device uses different
-ports for different types of messages and the port is being sent in
+adversary, without knowledge of the key: the device uses different
+ports for different types of messages. The port is sent in
 plaintext as specified by the LoRaWAN standard:}
 \begin{figure}[h!]
 {\includegraphics[width=0.8\textwidth]{images/image13.png}}
 \end{figure}
+
 {The following graph, depicting the ports of packets in time, was
 created from the received packets of the device:}
 \begin{figure}[h!]
 {\includegraphics[width=0.8\textwidth]{images/image3.png}}
 \end{figure}
 
-{It can be seen that the keep-alive packets are being sent on port 9,
-boot-up messages on port 5, and the presence detection uses port 20.
+{It can be seen that the keep-alive packets are sent on port 9,
+boot-up messages on port 5 and 7, and the presence detection uses port 20.
 While these packets were received using the correct keys, the port
 information is known to any adversary in range of the device.}
 
-\section{\texorpdfstring{{Counter-measurements}}{Counter measurements}}\label{h.5p1f7221qm42}
-
-{If event-based devices are not time critical (such as e.g. parking
-sensors), they can opt for sending packets in fixed time intervals to
-hide the events.}
+\section{Counter-measures}\label{h.5p1f7221qm42}
 
 {We assume that the motivation of the manufacturer to use different
 ports was to make life easier for developers. However, as it is sent in
-plain text, information is revealed unencrypted to an adversary. This
-problem could easily be fixed, by including the message type within the
+plain text, the information is revealed to an adversary. This
+problem could easily be fixed by including the message type within the
 encrypted payload and always using the same port. This would have to be
 done on the application level, as encryption of the port itself is not
 possible in the current standard.}
 
-\hypertarget{h.6snn4dp8j73u}{\section{\texorpdfstring{{LoRaWAN Standard
-and changes in LoRaWAN
-1.1}}{LoRaWAN Standard and changes in LoRaWAN 1.1}}\label{h.6snn4dp8j73u}}
+Even without the port information, the regularity of non-event packets (or simply the number of packets including the regular ones) can often be used to infer information. If event-based devices are not time-critical (such as e.g. parking
+sensors), they can opt for sending packets in fixed intervals in order to
+hide the events.
+
+To sufficiently hide events without delaying the packets, one needs to introduce dummy traffic to mask the real events.
+Depending on the target difficulty of guessing the real event, the amount of dummy
+traffic needs to be varied. However, this approach will consume more energy and thus might
+results in lower lifetime of battery-powered devices, if not compensated for otherwise.
+
+
+\chapter{LoRaWAN Standard and changes in LoRaWAN 1.1}\label{h.6snn4dp8j73u}
 
 {One of the biggest changes in LoRaWAN 1.1 is the addition of the
-backend definition. Details of this will be discussed below.}
+backend definition. We will present the details below.
 
 \hypertarget{h.jpbc1i7c9eqd}{\subsection{\texorpdfstring{{Frame
 counters}}{Frame counters}}\label{h.jpbc1i7c9eqd}}
@@ -705,12 +705,11 @@ through.}
 cryptographic methods and chose to use AES for encryption, the lack of
 specification of the network design and key management introduces
 several security flaws. The choice of symmetric keys (for simplicity?)
-shifts the burden of key management and distribution in an undefined
-process to manufacturers, users and network providers. This could be
-simplified by use of public key cryptography. The impact of such on
+shifts the burden of key management and distribution to users, manufacturers, and network providers. This could be
+simplified by the use of public key cryptography, or by specifying or recommending well-thought-out procedures in the standard. The impact of public-key cryptography on
 energy consumption has not been studied.}
 
 {While these issues might be easily addressed in a newer version of the
 standard, the visibility of events over long distances needs more
-sophisticated counter measurements, as they leak information by their
+sophisticated counter-measures, as events leak information by their
 sheer presence.
