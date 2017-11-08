@@ -204,7 +204,7 @@ request itself does not have any protection against replay attacks.}
 
 The standard mandates that packets with a too large FCnt value (larger than the last seen + some constant) be dropped, presumably in order to protect from injecting packets (e.g. replaying packets captured in the previous cycle of the 16-bit counter) and/or to avoid silently missing too many packets. However, this opens the door for an effective denial of service attack: if a packet with a \textit{lower} FCnt can be injected, further valid packets will be dropped. Because in practice network providers allow frame counter resets, a packet with FCnt 0 will always be accepted. Therefore replaying that one is sufficient to cause the network to drop all further valid packets from the device, because its FCnt values will be large (the device does not know that we triggered a counter reset).
 
-\subsection{Channel selection}
+\section{Channel selection}
 \label{sec.channel}
 
 The standard defines:
@@ -560,7 +560,7 @@ be persistent (stored in a non-volatile memory).
 %experimental/private networks that are left unmanaged.
 %\end{displayquote}
 
-\subsection{Packets are no longer dropped after a big frame counter gap}
+\subsection{Packets no longer dropped after a frame counter gap}
 
 The 1.0 standard defines that when a counter with a too big gap
 was detected, further frames are to be dropped (see \ref{sec.gap_dos}). 1.1 removes this
@@ -576,9 +576,9 @@ packets with a smaller frame counter.
 %MAX\_FCNT\_GAP then too many data frames have been lost then subsequent will be discarded.''
 %\end{displayquote}
 
-\hypertarget{h.i6r97yb5iafg}{\section{\texorpdfstring{{FPort}}{FPort}}\label{h.i6r97yb5iafg}}
+\section{FPort still not encrypted}
 
-{The FPort is still unencrypted in LoraWAN 1.1. Thus the event
+{The FPort is still sent as plain text in LoraWAN 1.1. Thus the event
 indications that were observed with the burglar alarm in our experiments (section \ref{sec.burglar})
 are still observable. To improve security, the LoRaWAN standard should
 move the FPort part into the encrypted message part.}
