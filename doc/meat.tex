@@ -677,9 +677,17 @@ shifts the burden of key management and distribution to users, manufacturers, an
 simplified by the use of public key cryptography, or by specifying or recommending well-thought-out procedures in the standard. The impact of public-key cryptography on
 energy consumption has not been studied.}
 
-While these issues might be easily addressed in a newer version of the
-standard, the visibility of events over long distances needs more
-sophisticated counter-measures, as events leak information by their
-sheer presence.
+While the issue of an undefined backend has partially been addressed
+in version 1.1 of the standard, the visibility of events over long
+distances needs more sophisticated counter-measures, as events leak
+information by their sheer presence.
 
-The draft of the upcoming LoRaWAN 1.1 standard addresses some, but not nearly all, of the outlined issues, while also introducing some new problems. Therefore LoRaWAN security is still far from solved.
+Furthermore the new standard does not address the key derivation
+problem and additionally it introduces a new single point of failure
+by enforcing backends to use the LoRa Alliance DNS infrastructure as a
+directory service.
+
+Overall we conclude that users of LoRaWAN cannot easily protect
+against event based information leakage, neither with version 1.0 nor
+with version 1.1 and that the newer standard does, generally speaking,
+not only increase security, but also decreases it in some areas.
