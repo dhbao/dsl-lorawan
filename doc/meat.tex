@@ -199,6 +199,27 @@ procedure and thus it uses fresh session keys. It is though undefined,
 how often or if at all the device repeats the join procedure. The join
 request itself does not have any protection against replay attacks.}
 
+\subsection{Denial of Service by Replaying Packets}
+\label{sec.gap_dos}
+
+The standard mandates that packets with a too large FCnt value (larger than the last seen + some constant) be dropped, presumably in order to protect from injecting packets (e.g. replaying packets captured in the previous cycle of the 16-bit counter) and/or to avoid silently missing too many packets. However, this opens the door for an effective denial of service attack: if a packet with a \textit{lower} FCnt can be injected, further valid packets will be dropped. Because in practice network providers allow frame counter resets, a packet with FCnt 0 will always be accepted. Therefore replaying that one is sufficient to cause the network to drop all further valid packets from the device, because its FCnt values will be large (the device does not know that we triggered a counter reset).
+
+\subsection{Channel selection}
+\label{sec.channel}
+
+The standard defines:
+
+\begin{displayquote}
+The end-device changes channel in a pseudo-random fashion for every
+transmission. The resulting frequency diversity makes the system more
+robust to interferences.
+\end{displayquote}
+
+In practice all tested devices just use round-robin: they select the next channel for the
+next packet. Thus an attacker can see if a packet was sent even if she did not receive it.
+This might be particularly useful for event based devices in which a distant
+attacker wants to distinguish between noise and real events. It also simplifies jamming, as predicting the channel for the next transmission is trivial.
+
 \hypertarget{h.1a3modh2fhpw}{\chapter{\texorpdfstring{{Security of
 event-based
 devices}}{Security of event-based devices}}\label{h.1a3modh2fhpw}}
@@ -215,7 +236,7 @@ sends a message, it can be detected by a receiver a couple of kilometers away.
 a list of devices}\label{h.jsdk7si1wtbx}
 
 {To illustrate the potential threats, a list of event-based devices
-found on the market has been compiled. The attack vectors assume that
+found on the market \cite{semtech} has been compiled. The attack vectors assume that
 the devices only send a message if an event has happened. In reality a device usually sends keep-alive packets in addition to event-related packets, but they are easily distinguishable, as they are sent at regular intervals.
 
 \begin{longtable}[c]{|l|l|l|}
@@ -389,8 +410,8 @@ manufacturer and could never change the key herself.
 Because it was not possible to connect the device to a network provider, no further tests have
 been conducted with this device.
 
-\section{\texorpdfstring{{Example:
-Burglar alarm}}{Example: Burglar alarm}}\label{h.ajy5u48pfd5q}
+\section{Example: Burglar alarm}
+\label{sec.burglar}
 
 {The Ascoel IR868LR family\footnote{\url{http://www.ascoel.it/images/pdf_ascoel/IR868LR_eng.pdf}} is
 an infrared passive sensor for indoor applications. It is also shipped
@@ -441,6 +462,8 @@ Even without the port information, the regularity of non-event packets (or simpl
 sensors), they can opt for sending packets in fixed intervals in order to
 hide the events.
 
+Further, the frame counter (or the channel, see \ref{sec.channel}) can be used by an attacker to learn the number of events that happened even before she started capturing packets.
+
 To sufficiently hide events without delaying the packets, one needs to introduce dummy traffic to mask the real events.
 Depending on the target difficulty of guessing the real event, the amount of dummy
 traffic needs to be varied. However, this approach will consume more energy and thus might
@@ -455,6 +478,8 @@ Note: As of the time of writing, only a draft version of the standard is availab
 
 \hypertarget{h.jpbc1i7c9eqd}{\section{\texorpdfstring{{Frame
 counters}}{Frame counters}}\label{h.jpbc1i7c9eqd}}
+
+\subsection{Avoiding replay attacks and nonce re-use}
 
 {The LoRaWAN 1.1 standard defines three instead of two frame counters. While
 1.0 defined one frame counter for uplink messages, 1.1 defines one
@@ -477,10 +502,9 @@ retransmission, with the same application and network session keys.
 In case of OTAA/Network Join, the counter is called DevNonce and is
 reset on every join:
 
-% TODO this figure is apparently the wrong one
-%\begin{figure}[h!]
-%{\includegraphics[width=0.8\textwidth]{images/image14.png}}
-%\end{figure}
+\begin{figure}[h!]
+{\includegraphics[width=0.8\textwidth]{images/image24.png}}
+\end{figure}
 
 \begin{displayquote}
 DevNonce is a counter starting at 0 when the device is initially
@@ -492,140 +516,98 @@ end-device, the Network Server keeps track of the last DevNonce value used by th
 end-device, and ignores Join-requests if DevNonce is not incremented.
 \end{displayquote}
 
-========== TODO \LaTeX{} and proofread from here ==========
-
-{Thus ABP devices need to have a permanent storage for their frame
+{Thus ABP devices need to have permanent storage for their frame
 counter, while OTAA devices can keep their counter in volatile memory,
-because they can reset their counter with new keys with a new join
+because they can reset their counter with new keys by a new join
 request.}
 
 {However OTAA devices receive a JoinNonce from the network that will
 always increase and thus needs to be stored in non-volatile memory:}
 
-{``Note: This mechanism prevents replay attacks by sending previously
+\begin{displayquote}
+Note: This mechanism prevents replay attacks by sending previously
 recorded join-request messages with the intention of disconnecting the
 respective end-device from the network. Any time the Network Server
-processes a Join-Request and generates a Join-accept frame, it shall}
-
-{maintain both the old security context (keys and counters, if any) and
+processes a Join-Request and generates a Join-accept frame, it shall maintain both the old security context (keys and counters, if any) and
 the new one until it receives the first successful uplink frame
 containing the RekeyInd command using the new context, after which the
-old context can be safely removed``}
+old context can be safely removed.
+\end{displayquote}
+
+\begin{displayquote}
+The JoinNonce is a device specific counter value (that never repeats
+itself) provided by the Join Server and used by the end-device to derive the session keys
+FNwkSIntKey, SNwkSIntKey, NwkSEncKey and AppSKey. JoinNonce is
+incremented with every Join-accept message.
+\end{displayquote}
 
 \begin{figure}[h!]
 {\includegraphics[width=0.8\textwidth]{images/image16.png}}
 \end{figure}
 
-{``The JoinNonce is a device specific counter value (that never repeats
-itself) provided by the}
+\begin{displayquote}
+The device keeps track of the JoinNonce value used in the last
+successfully processed Join-accept (corresponding to the last successful key derivation). The
+device SHALL accept the Join-accept only if the MIC field is correct and the JoinNonce is
+strictly greater than the recorded one. In that case the new JoinNonce value replaces the
+previously stored one. If the device is susceptible of being power cycled the JoinNonce SHALL
+be persistent (stored in a non-volatile memory).
+\end{displayquote}
 
-{Join Server and used by the end-device to derive the session keys
-FNwkSIntKey, SNwkSIntKey, NwkSEncKey and AppSKey. JoinNonce is
-incremented with every Join-}
+%\begin{displayquote}
+%The LoRa Alliance allocates a 24-bit unique network identifier (NetID)
+%to all networks with the exception of the following NetID values reserved for
+%experimental/private networks that are left unmanaged.
+%\end{displayquote}
 
-{accept message.''}
+\subsection{Packets are no longer dropped after a big frame counter gap}
 
-{``The device keeps track of the JoinNonce value used in the last
-successfully processed Join-}
+The 1.0 standard defines that when a counter with a too big gap
+was detected, further frames are to be dropped (see \ref{sec.gap_dos}). 1.1 removes this
+definition. The removal of this behavior prevents denial of service attacks by replaying
+packets with a smaller frame counter.
 
-{accept (corresponding to the last successful key derivation). The
-device SHALL accept the}
-
-{Join-accept only if the MIC field is correct and the JoinNonce is
-strictly greater than the}
-
-{recorded one. In that case the new JoinNonce value replaces the
-previously stored one.}
-
-{If the device is susceptible of being power cycled the JoinNonce SHALL
-be persistent}
-
-{(stored in a non-volatile memory).}
-
-{The LoRa Alliance allocates a 24bits unique network identifier (NetID)
-to all networks with}
-
-{the exception of the following NetID values reserved for
-experimental/private networks that}
-
-{are left unmanaged.}
-
-{``}
-
-\hypertarget{h.6wjpqn9cabfu}{\section{\texorpdfstring{{The gap drop
-is removed}}{The gap drop is removed}}\label{h.6wjpqn9cabfu}}
-
-{While the 1.0 standard defined that when a counter with a too big gap
-was detected, further frames are to be dropped, 1.1 removes this
-definition. By the removal of it, denial of service attacks with replay
-of packets are prevented.}
-
-{``At the receiver side, the corresponding counter is kept in sync with
-the}
-
-{value received provided the value received has incremented compared to
-the current}
-
-{counter value and is less than the value specified by MAX\_FCNT\_GAP 1
-after considering}
-
-{counter rollovers. If this difference is greater than the value of
-MAX\_FCNT\_GAP then too}
-
-{many data frames have been lost then subsequent will be discarded.''}
-
-\hypertarget{h.7ctbv6nd7du7}{\section{\texorpdfstring{{Channel
-selection}}{Channel selection}}\label{h.7ctbv6nd7du7}}
-
-{Both standards define that }
-
-{``The end-device changes channel in a pseudo-random fashion for every
-transmission. The resulting frequency diversity makes the system more
-robust to interferences.''}
-
-{In practise all tested devices just select the next channel for the
-next packet. Thus an attacker can see if she did not receive a packet.
-This might be particular useful for event based devices in which an
-attacker wants to distinguish between regular noise and real events.}
+% note: removed this quote because I don't think it makes sense -- is this from the old standard?
+%\begin{displayquote}
+%At the receiver side, the corresponding counter is kept in sync with
+%the value received provided the value received has incremented compared to
+%the current counter value and is less than the value specified by MAX\_FCNT\_GAP 1
+%after considering counter rollovers. If this difference is greater than the value of
+%MAX\_FCNT\_GAP then too many data frames have been lost then subsequent will be discarded.''
+%\end{displayquote}
 
 \hypertarget{h.i6r97yb5iafg}{\section{\texorpdfstring{{FPort}}{FPort}}\label{h.i6r97yb5iafg}}
 
 {The FPort is still unencrypted in LoraWAN 1.1. Thus the event
-indications that were observed with the burglar alarm in our experiments
+indications that were observed with the burglar alarm in our experiments (section \ref{sec.burglar})
 are still observable. To improve security, the LoRaWAN standard should
 move the FPort part into the encrypted message part.}
 
-\hypertarget{h.mdrkurwqvvj8}{\section{\texorpdfstring{{NEW: Lora
-alliance DNS server as a single point of
-failure}}{NEW: Lora alliance DNS server as a single point of failure}}\label{h.mdrkurwqvvj8}}
+\section{NEW: Lora alliance DNS as a single point of failure}
 
-{The new standard defines to use the DNS names
-}{JOINEUIS.LORA-ALLIANCE.ORG}{~and }{NETIDS.LORA-ALLIANCE.ORG }{that
-SHALL be used for finding the join server and netid respectively.}
+The new standard defines to use the DNS names
+\texttt{JOINEUIS.LORA-ALLIANCE.ORG}~and \texttt{NETIDS.LORA-ALLIANCE.ORG} that
+SHALL be used for finding the Join Server and NetID, respectively.
 
-{In this regard the domain name }{LORA-ALLIANCE.ORG }{becomes a }{NEW
-single point of failure }{for backend networks.}
+In this regard the domain name \texttt{LORA-ALLIANCE.ORG}, and its associated name servers, become \textbf{new} single points of failure for the whole system.
 
-{Compare with chapter ``19.1}{~DNS configuration'' of the backend
+{Compare with chapter 19.1~``DNS configuration'' of the backend
 definition.}
 
-\hypertarget{h.mn1ux3159m0}{\section{\texorpdfstring{{Communication
-between gateway and the
-network}}{Communication between gateway and the network}}\label{h.mn1ux3159m0}}
+\section{Communication between gateway and network}
 
-{In LoRaWAN 1.1 gateways are connected to the Network Server via secured
-standard IP connections, while previously it was undefined. In practise
-packets of LoRaWAN 1.0 gateways were forwarded using plain UDP without
-any encryption or signature.}
+{In LoRaWAN 1.1 gateways are connected to the Network Server via secured IP connections, while previously it was undefined. In practice
+packets of LoRaWAN 1.0 gateways are usually forwarded using plain UDP without
+any encryption or signature. Defining this is therefore an improvement.}
 
 \hypertarget{h.jom2i6adwnnm}{\section{\texorpdfstring{{NetID
 defined}}{NetID defined}}\label{h.jom2i6adwnnm}}
 
 {Before version 1.1 the handling of the NetID was undefined and could be
-chosen by a network provider. Since 1.1 they are allocated by lora
-alliance. Even though this will regulate the use more clearly, it also
-adds an additional attack vector: Now an attacker can lookup the netid
-from the DNS database and specifically attack a network}
+chosen by a network provider. Since 1.1 they are allocated by LoRa
+Alliance. Even though this will regulate the use more clearly, it also
+adds an additional attack vector: now an attacker can lookup the NetID
+from the DNS database and specifically attack the chosen network.}
 
 \hypertarget{h.rext4wcd7qnn}{\section{\texorpdfstring{{Communication
 between
@@ -634,33 +616,34 @@ AS/NS/JS}}{Communication between AS/NS/JS}}\label{h.rext4wcd7qnn}}
 {The LoRaWAN 1.1 standard defines a reference backend network model as
 follows:}
 \begin{figure}[h!]
-{\includegraphics[width=0.8\textwidth]{images/image10.png}}
+{\includegraphics[width=0.8\textwidth]{images/image20.png}}
 \end{figure}
 
-{The LoRaWAN Standard defines only use of shared keys between the
-application server / network server and join server. However public key
-crypto would also be feasible (page 18 of backend document).}
+The LoRaWAN Standard defines only using shared keys between the
+application server, network server and join server. However, public key
+crypto would also be feasible, and would simplify key management and configuration. %(page 18 of backend document).
 
 \hypertarget{h.rxbla8bfpdr7}{\section{\texorpdfstring{{Unique Key
 usage}}{Unique Key usage}}\label{h.rxbla8bfpdr7}}
 
 {Version 1.1. defines that a key should be unique per device: }
 
-{``1. Since all end-devices are equipped with unique application and
+\begin{displayquote}
+Since all end-devices are equipped with unique application and
 network root keys specific for each end-device, extracting the
-AppKey/NwkKey from an end-device only compromises this one end-device.''
-(6.1.1.3 footnote 1)}
+AppKey/NwkKey from an end-device only compromises this one end-device.
+[6.1.1.3 footnote 1].
+\end{displayquote}
 
-{Prior to 1.1 this was undefined and thus shared keys were used in
+{Prior to 1.1 this is undefined and shared keys are used in
 different devices, especially for ABP devices.}
 
 \hypertarget{h.ukt1jzew31xa}{\section{\texorpdfstring{{Key
 Derivation}}{Key Derivation}}\label{h.ukt1jzew31xa}}
 
 {One of the challenging aspects of LoRaWAN is a safe key derivation
-method to separate payload and mac command encryption. LoRaWAN 1.0 does
-not define the backend and thus left it open to the network provider on
-which part of the infrastructure generates the keys. In practise this
+method to separate payload and MAC command encryption. LoRaWAN 1.0 does
+not define the backend. Thus deciding which part of the infrastructure generates the keys is left open to the network provider. In practice this
 led to the situation that network providers (TTN, Loriot, Swisscom) all
 have knowledge of both keys and user data is visible to the network
 provider.}
@@ -668,7 +651,7 @@ provider.}
 {Even though in LoRaWAN backend services are defined and the Join Server
 handles the key management, it is highly unlikely that a user actually
 operates the join server, as it takes a core role in the network
-providers backend. }
+provider's backend. }
 
 {It is defined that the application server will request the keys from
 the join server on arrival of encrypted messages with payload inside.
@@ -679,8 +662,8 @@ be operated by the user to be able to hide the payload encryption key.}
 overdefinition}}{Dangers of overdefinition}}\label{h.q0a2jd9a1je7}}
 
 {While LoRaWAN 1.0 did not define the backend part at all, in LoRaWAN
-1.1 various aspects of communication (like HTTP transport, POST-based, JSON) are half defined in LoRaWAN 1.1. It seems that the omission of
-the backend definition in 1.1 caused the authors to include an
+1.1 various aspects of communication (like HTTP transport, POST-based, JSON) are half-defined. It seems that the omission of
+the backend definition in 1.0 caused the authors to include an
 incomplete communication scheme that might not be fully thought
 through.}
 
@@ -694,7 +677,9 @@ shifts the burden of key management and distribution to users, manufacturers, an
 simplified by the use of public key cryptography, or by specifying or recommending well-thought-out procedures in the standard. The impact of public-key cryptography on
 energy consumption has not been studied.}
 
-{While these issues might be easily addressed in a newer version of the
+While these issues might be easily addressed in a newer version of the
 standard, the visibility of events over long distances needs more
 sophisticated counter-measures, as events leak information by their
 sheer presence.
+
+The draft of the upcoming LoRaWAN 1.1 standard addresses some, but not nearly all, of the outlined issues, while also introducing some new problems. Therefore LoRaWAN security is still far from solved.
